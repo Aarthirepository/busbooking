@@ -1,38 +1,51 @@
 const db = require("../utils/db-connection");
+const {Users} = require('../models/busbooking')
 
+const addEntries = async (req, res) => {
+  try {
+    const { email, name } = req.body;
 
-     const addEntries = (req, res) => {
-       const { email, name } = req.body;
-       const insertQuery = "INSERT INTO users(email,name) VALUES (?,?)";
+    if (!email || !name) {
+      return res.status(400).json({
+        message: "email and name are required",
+      });
+    }
 
-       db.execute(insertQuery, [email, name], (err) => {
-         if (err) {
-           console.log(err.message);
-           res.status(500).send(err.message);
-         //  connection.end();
-           return;
-         }
-         console.log("Value has been inserted");
-         res.status(200).send(`User ${name} and ${email} is added`);
-       });
-     };
+    const user = await Users.create({
+      email,
+      name,
+    });
 
-     
-const getUsers = (req, res) => {
-  const retrieveQuery = "SELECT * FROM  users";
-  db.execute(retrieveQuery, (err, results)=>{
-     if(err){
-        console.log(err.message)
-        res.status(500).send((err.message))
-        return
-     }
-     console.log("User details retrieved")
-     res.status(200).json(results)
-  })
+    console.log("User inserted", user.id);
+
+    res.status(201).json({
+      message: `User ${name} with ${email} added successfully`,
+      data: user,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: error.message,
+    });
+  }
 };
 
+const getUsers = async (req, res) => {
+  try {
+    const users = await Users.findAll();
 
+    console.log("User details retrieved");
 
-module.exports= {
-    addEntries, getUsers
-}
+    res.status(200).json(users);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: error.message,
+    });
+  }
+};
+
+module.exports = {
+  addEntries,
+  getUsers,
+};

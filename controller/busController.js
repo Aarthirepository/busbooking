@@ -1,38 +1,58 @@
 const db = require("../utils/db-connection");
+const {Bookings} = require('../models/busbooking')
 
-const addBus = (req, res) => {
-  const { seatnumber } = req.body;
-  const insertQuery = "INSERT INTO bookings(id,seatnumber) VALUES (?)";
 
-  db.execute(insertQuery, [ seatnumber], (err) => {
-    if (err) {
-      console.log(err.message);
-      res.status(500).send(err.message);
-      //  connection.end();
-      return;
+
+
+const addBus = async (req, res) => {
+  try {
+    const { seatnumber } = req.body;
+
+    if (!seatnumber) {
+      return res.status(400).send("seatnumber is required");
     }
-    console.log("Value has been inserted");
-    res.status(200).send(`User  seatnumber ${seatnumber} is added`);
-  });
+
+    const booking = await Bookings.create({
+      seatNumber: seatnumber,
+    });
+
+    console.log("Booking added ✅", booking.id);
+
+    res.status(201).json({
+      message: "Seat added successfully",
+      data: booking,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Error adding booking");
+  }
+};
+const retrieveAvailableSeats = async (req, res) => {
+  try {
+    const totalSeats = 50;
+
+    const bookedSeats = await Bookings.count();
+
+    const availableSeats = totalSeats - bookedSeats;
+
+    if (availableSeats > 10) {
+      return res.status(200).json({
+        availableSeats,
+        status: "Seats available",
+      });
+    }
+
+    return res.status(200).json({
+      availableSeats,
+      status: "Low seat availability",
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
 
-const  retrieveAvailableSeats = (req,res)=>{
-       const minseats= req.params.seats
-       const total_seats = 50
-       const  retrieveSeatQuery =`  SELECT (
-        ${total_seats} - count(*)) AS available_seats
-        from Bookings
-        HAVING available_seats > ?`
-       
-   
-  db.execute(retrieveSeatQuery, [minseats], (err,results)=>{
-    if(err){
-        return res.status(500).json({error:err.message})
-    }
-    return res.status(200).json(results)
-  })
-}
+
 module.exports = {
   addBus,retrieveAvailableSeats
 };
