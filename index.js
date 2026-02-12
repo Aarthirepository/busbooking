@@ -3,7 +3,8 @@ const db = require('./utils/db-connection')
 const busbookingModel = require('./models/busbooking')
 
 const userRoutes =require('./routes/userRoutes')
-const busRoutes = require('./routes/busRouter')
+const bookingRoutes = require('./routes/bookingRoutes')
+const busRoutes = require("./routes/busRoutes");
 const app  = express()
 
 app.use(express.json());
@@ -13,6 +14,7 @@ app.use(express.json());
 app.get("/", (req, res) => res.send("Hello World"));
 
 app.use('/user', userRoutes)
+app.use('/booking', bookingRoutes)
 app.use('/buses', busRoutes)
 
  

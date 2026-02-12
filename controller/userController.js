@@ -1,6 +1,8 @@
 const db = require("../utils/db-connection");
-const {Users} = require('../models/busbooking')
 
+const { Bookings, Bus,Users} = require("../models"); // import Bookings and Bus for relations
+
+// Add a new user
 const addEntries = async (req, res) => {
   try {
     const { email, name } = req.body;
@@ -11,10 +13,7 @@ const addEntries = async (req, res) => {
       });
     }
 
-    const user = await Users.create({
-      email,
-      name,
-    });
+    const user = await Users.create({ email, name });
 
     console.log("User inserted", user.id);
 
@@ -24,28 +23,50 @@ const addEntries = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
-      error: error.message,
-    });
+    res.status(500).json({ error: error.message });
   }
 };
 
+// Get all users
 const getUsers = async (req, res) => {
   try {
     const users = await Users.findAll();
-
     console.log("User details retrieved");
-
     res.status(200).json(users);
   } catch (error) {
     console.error(error);
-    res.status(500).json({
-      error: error.message,
-    });
+    res.status(500).json({ error: error.message });
   }
 };
+
+
+// NEW: Get all bookings for a specific user, including bus details
+const getUserBookings = async (req, res) => {
+  try {
+    const userId= req.params.id;
+
+    const bookings = await Bookings.findAll({
+      where: { userId },
+      attributes: ["id", "seatNumber"],
+      include: [
+        {
+          model: Bus,
+          attributes: ["busNumber"],
+        },
+      ],
+    });
+
+    res.status(200).json(bookings);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// NEW: Get all bookings for a specific user with bus details
 
 module.exports = {
   addEntries,
   getUsers,
+  getUserBookings, // export the new function
 };

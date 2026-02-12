@@ -1,58 +1,42 @@
-const db = require("../utils/db-connection");
-const {Bookings} = require('../models/busbooking')
-
-
-
+const { Bus,Bookings,Users } = require("../models");
 
 const addBus = async (req, res) => {
   try {
-    const { seatnumber } = req.body;
+    const { busNumber, totalSeats, availableSeats } = req.body;
 
-    if (!seatnumber) {
-      return res.status(400).send("seatnumber is required");
+    if (!busNumber || !totalSeats || !availableSeats) {
+      return res.status(400).json({ message: "All fields are required" });
     }
 
-    const booking = await Bookings.create({
-      seatNumber: seatnumber,
+    const bus = await Bus.create({
+      busNumber,
+      totalSeats,
+      availableSeats,
     });
 
-    console.log("Booking added ✅", booking.id);
-
-    res.status(201).json({
-      message: "Seat added successfully",
-      data: booking,
-    });
+    res.status(201).json({ message: "Bus added successfully", data: bus });
   } catch (error) {
     console.error(error);
-    res.status(500).send("Error adding booking");
-  }
-};
-const retrieveAvailableSeats = async (req, res) => {
-  try {
-    const totalSeats = 50;
-
-    const bookedSeats = await Bookings.count();
-
-    const availableSeats = totalSeats - bookedSeats;
-
-    if (availableSeats > 10) {
-      return res.status(200).json({
-        availableSeats,
-        status: "Seats available",
-      });
-    }
-
-    return res.status(200).json({
-      availableSeats,
-      status: "Low seat availability",
-    });
-  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+const getBusBookings = async (req, res) => {
+  try {
+    const busId = req.params.id;
 
+    const bookings = await Bookings.findAll({
+      where: { busId },
+      attributes: ["id", "seatNumber"],
+      include: {
+        model: Users,
+        attributes: ["name", "email"],
+      },
+    });
 
-
-module.exports = {
-  addBus,retrieveAvailableSeats
+    res.status(200).json(bookings);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
+
+module.exports = { addBus ,getBusBookings}; // export this separately
